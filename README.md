@@ -1,7 +1,7 @@
 # Generative AI Application – Personal Data Chatbot
 ![Chatbot](img/chatbot-for-own-data.png)
 
-Demo App: ![Demo](https://chatbot-for-own-data.xs6r134s1i6.us-east.codeengine.appdomain.cloud/)
+Demo App: ![](https://chatbot-for-own-data.xs6r134s1i6.us-east.codeengine.appdomain.cloud/)
 
 ## Overview
 
