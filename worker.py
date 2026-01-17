@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 from langchain_core.prompts import PromptTemplate  # Updated import per deprecation notice
 from langchain.chains import RetrievalQA
-from langchain_community.embeddings import HuggingFaceInstructEmbeddings  # New import path
+from langchain_community.embeddings import HuggingFaceEmbeddings  # New import path
 from langchain_community.document_loaders import PyPDFLoader  # New import path
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma  # New import path
@@ -30,7 +30,7 @@ def init_llm():
     logger.info("Initializing WatsonxLLM and embeddings...")
 
     # Llama Model Configuration
-    MODEL_ID = "meta-llama/llama-3-3-70b-instruct"
+    MODEL_ID ="meta-llama/llama-3-405b-instruct"
     WATSONX_URL = "https://us-south.ml.cloud.ibm.com"
     PROJECT_ID = "skills-network"
 
@@ -51,9 +51,19 @@ def init_llm():
     )
     logger.debug("WatsonxLLM initialized: %s", llm_hub)
 
-    #Initialize embeddings using a pre-trained model to represent the text data.
-    embeddings =  # create object of Hugging Face Instruct Embeddings with (model_name,  model_kwargs={"device": DEVICE} )
-    
+    # Initialize embeddings using a pre-trained model to represent the text data.
+    ### --> if you are using huggingFace API:
+    # Set up the environment variable for HuggingFace and initialize the desired model, and load the model into the HuggingFaceHub
+    # dont forget to remove llm_hub for watsonX
+
+    # os.environ["HUGGINGFACEHUB_API_TOKEN"] = "YOUR API KEY"
+    # model_id = "mistralai/Mistral-7B-Instruct-v0.3"
+    #llm_hub = HuggingFaceHub(repo_id=model_id, model_kwargs={"temperature": 0.1, "max_new_tokens": 600, "max_length": 600})
+
+    embeddings = HuggingFaceEmbeddings(
+        model_name="sentence-transformers/all-MiniLM-L6-v2", 
+        model_kwargs={"device": DEVICE}
+    )
     logger.debug("Embeddings initialized with model device: %s", DEVICE)
 
 # Function to process a PDF document
@@ -62,12 +72,12 @@ def process_document(document_path):
 
     logger.info("Loading document from path: %s", document_path)
     # Load the document
-    loader =  # ---> use PyPDFLoader and document_path from the function input parameter <---
+    loader = PyPDFLoader(document_path)
     documents = loader.load()
     logger.debug("Loaded %d document(s)", len(documents))
 
-    # Split the document into chunks, set chunk_size=1024, and chunk_overlap=64. assign it to variable text_splitter
-    text_splitter = # ---> use Recursive Character TextSplitter and specify the input parameters <---
+    # Split the document into chunks
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=64)
     texts = text_splitter.split_documents(documents)
     logger.debug("Document split into %d text chunks", len(texts))
 
@@ -93,7 +103,7 @@ def process_document(document_path):
         # chain_type_kwargs={"prompt": prompt}  # if you are using a prompt template, uncomment this part
     )
     logger.info("RetrievalQA chain created successfully.")
-    
+
 # Function to process a user prompt
 def process_prompt(prompt):
     global conversation_retrieval_chain
@@ -106,9 +116,7 @@ def process_prompt(prompt):
     logger.debug("Model response: %s", answer)
 
     # Update the chat history
-    # TODO: Append the prompt and the bot's response to the chat history using chat_history.append and pass `prompt` `answer` as arguments
-    # --> write your code here <--	
-    
+    chat_history.append((prompt, answer))
     logger.debug("Chat history updated. Total exchanges: %d", len(chat_history))
 
     # Return the model's response
